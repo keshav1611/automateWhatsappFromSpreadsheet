@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Upload CSV File</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f9fa;
+        margin: 0;
+        padding: 20px;
+      }
+      h1 {
+        color: #343a40;
+      }
+      .upload-container {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+      .upload-form {
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        flex: 1;
+        margin-right: 20px;
+      }
+      .upload-form:last-child {
+        margin-right: 0;
+      }
+      .upload-form input[type="file"] {
+        margin-right: 10px;
+      }
+      .upload-form .form-group {
+        margin-bottom: 10px;
+      }
+      .upload-form .form-group label {
+        display: block;
+        margin-bottom: 5px;
+      }
+      .selection-form {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      .selection-form table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      .selection-form th, .selection-form td {
+        border: 1px solid #dee2e6;
+        padding: 8px;
+        text-align: left;
+        cursor: pointer;
+      }
+      .selection-form th {
+        background-color: #343a40;
+        color: white;
+      }
+      .selection-form tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+      .submit-button {
+        align-self: flex-start;
+        margin-top: 10px;
+      }
+      .submit-button input[type="submit"] {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .submit-button input[type="submit"]:hover {
+        background-color: #0056b3;
+      }
+      .scrollable-table {
+        max-height: 60vh; /* 70% of the viewport height */
+        overflow-y: auto;
+        width: 100%;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th, td {
+        border: 1px solid #dee2e6;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #343a40;
+        color: white;
+      }
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .button-container {
+        display: flex;
+        align-items: center;
+      }
+      .back-button, .process-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-left: 20px;
+      }
+      .back-button:hover, .process-button:hover {
+        background-color: #0056b3;
+      }
+      .search-box {
+        margin-bottom: 10px;
+        width: 100%;
+      }
+      .search-box input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+      }
+      .message {
+        margin-top: 20px;
+        padding: 10px;
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+        border-radius: 4px;
+      }
+    </style>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const rows = document.querySelectorAll('.selectable-row');
+        rows.forEach(row => {
+          row.addEventListener('click', function() {
+            const checkbox = this.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+          });
+        });
+
+        // Back button functionality
+        const backButton = document.getElementById('back-button');
+        if (backButton) {
+          backButton.addEventListener('click', function() {
+            window.history.back();
+          });
+        }
+
+        // Search functionality
+        const searchBox = document.getElementById('search-box');
+        if (searchBox) {
+          searchBox.addEventListener('input', function() {
+            const searchTerm = searchBox.value.toLowerCase();
+            const tableRows = document.querySelectorAll('.selectable-row');
+            tableRows.forEach(row => {
+              const nameCell = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+              if (nameCell.includes(searchTerm)) {
+                row.style.display = '';
+              } else {
+                row.style.display = 'none';
+              }
+            });
+          });
+        }
+
+        // Process data with AJAX
+        const processForm = document.getElementById('process-form');
+        if (processForm) {
+          processForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(processForm);
+            fetch('/process', {
+              method: 'POST',
+              body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === 'success') {
+                const messageDiv = document.getElementById('message');
+                messageDiv.textContent = 'Data processed successfully';
+                messageDiv.style.display = 'block';
+              }
+            });
+          });
+        }
+
+        // Image upload with AJAX
+        const imageForm = document.getElementById('image-form');
+        const imageFileInput = document.getElementById('image-file');
+        if (imageFileInput) {
+          imageFileInput.addEventListener('change', function(event) {
+            const formData = new FormData(imageForm);
+            fetch('/upload_image', {
+              method: 'POST',
+              body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === 'success') {
+                const messageDiv = document.createElement('div');
+                messageDiv.textContent = 'Image uploaded successfully';
+                messageDiv.className = 'message';
+                document.querySelector('.container').appendChild(messageDiv);
+              }
+            });
+          });
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Upload Files</h1>
+      <div class="upload-container">
+        <form method="post" enctype="multipart/form-data" action="/upload" class="upload-form">
+          <div class="form-group">
+            <label for="csv-file">Upload CSV:</label>
+            <input type="file" id="csv-file" name="file">
+          </div>
+          <input type="submit" value="Upload">
+        </form>
+
+        <form method="post" enctype="multipart/form-data" action="/upload_image" id="image-form" class="upload-form">
+          <div class="form-group">
+            <label for="image-file">Upload Image:</label>
+            <input type="file" id="image-file" name="image">
+          </div>
+        </form>
+      </div>
+
+      {% if column_values %}
+        <h2>Select Items</h2>
+        <form method="post" action="/select" class="selection-form">
+          <div class="search-box">
+            <input type="text" id="search-box" placeholder="Search by name...">
+          </div>
+          <div class="scrollable-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Select</th>
+                  <th>Name</th>
+                  <th>Phone 1 - Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in column_values %}
+                  <tr class="selectable-row">
+                    <td><input type="checkbox" name="selected_items" value="{{ row }}"></td>
+                    <td>{{ row[0] }}</td>
+                    <td>{{ row[1] }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="submit-button">
+            <input type="submit" value="Submit">
+          </div>
+        </form>
+      {% endif %}
+
+      {% if selected_items %}
+        <h2>Selected Items</h2>
+        <div class="button-container">
+          <div class="scrollable-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Phone 1 - Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in selected_items %}
+                  <tr>
+                    <td>{{ item[0] }}</td>
+                    <td>{{ item[1] }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <button id="back-button" class="back-button">Go Back</button>
+          <form method="post" id="process-form" action="/process">
+            {% for item in selected_items %}
+              <input type="hidden" name="selected_items" value="{{ item }}">
+            {% endfor %}
+            <button type="submit" class="process-button">Send Whatsapp Invite</button>
+          </form>
+        </div>
+        <div id="message" class="message" style="display: none;"></div>
+      {% endif %}
+    </div>
+  </body>
+</html>
